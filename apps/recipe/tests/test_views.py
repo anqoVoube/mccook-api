@@ -5,8 +5,8 @@ from apps.ingredients.models.ingredients import Ingredients
 from rest_framework import status
 from apps.recipe.models.recipe import Recipe
 from apps.recipe.models.recipe_steps import RecipeSteps
-from apps.recipe.serializers.recipe_steps import RecipeStepsSerializer
 from django.urls import reverse
+from apps.commentrate.models.commentrate import CommentRate
 import json
 
 class RecipeCreateViewTest(TestCase):
@@ -170,6 +170,12 @@ class RecipeListRetrieveViewTest(TestCase):
         self.url_retrieve = reverse('recipe-retrieve',
                                     kwargs={'pk': self.first_recipe_id})
         
+        # Comments
+        CommentRate.objects.create(by_client=self.client,
+                                   text="Very good",
+                                   rate=5,
+                                   to_recipe=self.first_recipe)
+        
         # APIClient
         self.apiclient = APIClient()
         self.apiclient.force_authenticate(user=self.user)
@@ -181,19 +187,11 @@ class RecipeListRetrieveViewTest(TestCase):
         data_in_dict = json.loads(data_in_str)
         self.assertEqual(len(data_in_dict), 1)
         self.assertEqual(data_in_dict[0]['name'], "somename")
-        self.assertEqual(data_in_dict[0]['step_of_recipe'],
-                [
-                   {
-                      "step_number": 1,
-                      "description": "A b d e r t y q w e233e 2 23e23 qds"
-                   },
-                   {
-                      "step_number": 2,
-                      "description": "A b d e r t y q we3 w w e 2"
-                   },
-                    
-                ])
-    
+        self.assertIn("name", (data_in_dict[0]).keys())
+        self.assertIn("description", (data_in_dict[0]).keys())
+        self.assertIn("ingredients", (data_in_dict[0]).keys())
+        self.assertNotIn("step_of_recipe", (data_in_dict[0]).keys())
+
     def test_retrieve_recipe(self):
         response = self.apiclient.get(self.url_retrieve)
         self.assertEqual(response.status_code, 200)
@@ -213,6 +211,13 @@ class RecipeListRetrieveViewTest(TestCase):
                           "step_number": 2,
                           "description": "A b d e r t y q we3 w w e 2"
                        },
+                ],
+                "comments_and_rates": [
+                    {
+                        "by_client": "anqov",
+                        "text": "Very good",
+                        "rate": 5
+                    }
                 ]
             }
         )

@@ -99,6 +99,7 @@ class ClientCommentrateSerializer(serializers.ModelSerializer):
         return commentrate_client
 
 class CommentrateSerializer(serializers.ModelSerializer):
+    by_client = serializers.StringRelatedField()
     class Meta:
         model = CommentRate
-        fields = ['by_client', 'text', 'recipe']
+        fields = ['by_client', 'text', 'rate']

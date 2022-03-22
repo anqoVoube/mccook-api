@@ -5,6 +5,8 @@ from rest_framework import serializers
 from django.db.models import Prefetch
 from apps.client.models.client import Client
 from apps.ingredients.models.ingredients import Ingredients
+from apps.commentrate.models.commentrate import CommentRate
+from apps.commentrate.serializers.commentrate import CommentrateSerializer
 
 
 class WordListingField(serializers.StringRelatedField):
@@ -116,10 +118,24 @@ It should contain step_number and description"
         return recipe_itself
 
 class RecipeListSerializer(serializers.ModelSerializer):
+    ingredients = WordListingField(many=True)
+    class Meta:
+        model = Recipe
+        fields = ['name', 'description',
+                  'ingredients']
+        
+
+class RecipeRetrieveSerializer(serializers.ModelSerializer):
+    comments_and_rates = serializers.SerializerMethodField()
     step_of_recipe = RecipeStepsSerializer(many=True,
                                            required=True)
     ingredients = WordListingField(many=True)
     class Meta:
         model = Recipe
         fields = ['name', 'description',
-                  'ingredients', 'step_of_recipe']
+                  'ingredients', 'step_of_recipe', 'comments_and_rates']
+    
+    def get_comments_and_rates(self, obj):
+        comments_rates = CommentRate.objects.filter(to_recipe=obj)
+        serialized_data = CommentrateSerializer(comments_rates, many=True).data
+        return serialized_data

@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from apps.recipe.models.recipe import Recipe
-from apps.recipe.serializers.recipe import RecipeCreateSerializer, RecipeListSerializer
+from apps.recipe.serializers.recipe import RecipeCreateSerializer, RecipeListSerializer, RecipeRetrieveSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import ListAPIView
@@ -28,7 +28,7 @@ class RecipeRetrieveView(APIView):
 
     def get(self, request, pk, format=None):
         object = self.get_object(pk)
-        serializer = RecipeListSerializer(object)
+        serializer = RecipeRetrieveSerializer(object)
         return Response(serializer.data)
 
 # from apps.recipe.models.recipe import Recipe

@@ -1,11 +1,13 @@
 from django.test import TestCase
 from apps.ingredients.models.ingredients import Ingredients
 from apps.client.models.client import User, Client
-from apps.recipe.serializers.recipe import RecipeCreateSerializer
+from apps.recipe.serializers.recipe import RecipeCreateSerializer, RecipeRetrieveSerializer, RecipeListSerializer
 from rest_framework import serializers
+from apps.recipe.models.recipe import Recipe
+from apps.recipe.models.recipe_steps import RecipeSteps
 
 
-class RecipeSerializerTest(TestCase):
+class RecipeCreateSerializerTest(TestCase):
     def setUp(self):
         # Ingredients
         Ingredients.objects.bulk_create([
@@ -185,13 +187,13 @@ but delicious and tasty meal. Your mouth will be watering"
         self.assertEqual(none_steps_serializer.errors, {
             "not_assigned_steps": ["steps object is not assigned"]
         })
-    
+
     def test_fields_error(self):
         wrong_data = {
             "name": 'w',
             "description": 'Bad description',
         }
-        
+
         wrong_data_serializer = RecipeCreateSerializer(data=wrong_data)
         self.assertFalse(wrong_data_serializer.is_valid())
         self.assertRaises(serializers.ValidationError)
@@ -207,3 +209,89 @@ but delicious and tasty meal. Your mouth will be watering"
                 "steps object is not assigned"
                 ]
         })
+
+class RecipeListSerializerTest(TestCase):
+    def setUp(self):
+        # Ingredients
+
+        self.meat = Ingredients.objects.create(ingredient_name="Meat")
+        self.onion = Ingredients.objects.create(ingredient_name="Onion")
+
+        # User
+        self.password = 'SomePassword123'
+        self.user = User(first_name="Jamoliddin",
+                         last_name="Bakhriddinov",
+                         username="anqov",
+                         email="alex.person7@mail.ru")
+        self.user.set_password(self.password)
+        self.user.save()
+        # Client
+        self.client = Client.objects.get(client_user=self.user)
+
+        # Recipe
+        self.first_name = "Kebab"
+        self.second_name = "Kebab2"
+        self.first_description = "Kebab is not fried meat, \
+but delicious and tasty meal. Your mouth will be watering"
+        self.second_description = "Kebab is not fried meat, \
+but delicious and tasty meal. Your mouth will be watering"
+
+        self.first_recipe = Recipe.objects.create(name=self.first_name,
+                                            description=self.first_description,
+                                            by_cook=self.client,
+                                            confirmed="A")
+        self.first_recipe.ingredients.add(self.meat, self.onion)
+
+        self.second_recipe = Recipe.objects.create(name=self.second_name,
+                                            description=self.second_description,
+                                            by_cook=self.client,
+                                            confirmed="A")
+        self.second_recipe.ingredients.add(self.onion)
+
+        # RecipeSteps
+        RecipeSteps.objects.create(step_number=1,
+                                   description="1 b c d e f g h j k l q e r t",
+                                   recipe=self.first_recipe)
+        RecipeSteps.objects.create(step_number=2,
+                                   description="2 b c d e f g h j k l q e r t",
+                                   recipe=self.first_recipe)
+        
+    def test_list(self):
+        recipes = Recipe.objects.filter(confirmed="A")
+        serializer = RecipeListSerializer(recipes, many=True)
+        self.assertEqual(serializer.data, 
+                        [
+                            {
+                                "name": self.first_name,
+                                "description": self.first_description,
+                                "ingredients": ["Meat", "Onion"]     
+                            },
+                            {
+                                "name": self.second_name,
+                                "description": self.second_description,
+                                "ingredients": ["Onion"]
+                            }
+                        ]
+                    )
+
+    def test_retrieve(self):
+        serializer = RecipeRetrieveSerializer(self.first_recipe)
+        self.assertEqual(serializer.data, 
+                    {
+                        "name": self.first_name,
+                        "description": self.first_description,
+                        "ingredients": ["Meat", "Onion"],
+                        "step_of_recipe": [
+                           {
+                               "step_number": 1,
+                               "description": "1 b c d e f g h j k l q e r t",
+                           },
+                           {
+                               "step_number": 2,
+                               "description": "2 b c d e f g h j k l q e r t",
+                           }
+                        ],
+                        "comments_and_rates": []
+                    }
+                )
+        
