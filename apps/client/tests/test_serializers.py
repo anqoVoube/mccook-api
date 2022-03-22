@@ -2,8 +2,11 @@ from django.test import TestCase
 from apps.client.models.client import User
 from apps.client.serializers.client import UserSerializer
 from rest_framework import serializers
+from apps.client.models.client import Client
+from apps.commentrate.models.commentrate import CommentRate
+from apps.client.serializers.client import ClientRetrieveSerializer
 
-class ClientSerializerTest(TestCase):
+class UserCreateSerializerTest(TestCase):
     def setUp(self):
         # Class Variables
         self.first_name = "Jamoliddin"
@@ -181,4 +184,39 @@ This field must have only english letters."]
         self.assertEqual("Sobaka", (serializer.data)["special_answer"]),
 
 
-                          
+class UserRetrieveSerializerTest(serializers.ModelSerializer):
+    def setUp(self):
+        # User
+        self.password = 'SomePassword123'
+        self.user = User(first_name="Jamoliddin",
+                         last_name="Bakhriddinov",
+                         username="anqov",
+                         email="alex.person7@mail.ru")
+        self.user.set_password(self.password)
+        self.user.save()
+        # Client
+        self.client = Client.objects.get(client_user=self.user)
+        
+        # CommentsRates
+        CommentRate.objects.create(by_client=self.client,
+                                    text="Bad",
+                                    rate=1
+                                    )
+        #Note that rating changes, not when we create CommentRate object,
+        # but when we do post request in commentrate of recipe or client.
+
+    def test_serializer(self):
+        serialized_data = ClientRetrieveSerializer(self.client).data
+        self.assertEqual(serialized_data, 
+                         {
+                             "client_user": "anqov",
+                             "rating": "0",
+                             "comments_rates": [
+                                 {
+                                    "by_client": "anqov",
+                                    "text": "Bad",
+                                    "rate": 1
+                                 }
+                             ]
+                         }
+                        )

@@ -151,7 +151,7 @@ at least three letters or numbers"
         user.save()
 
 
-class ClientSerializer(serializers.ModelSerializer):
+class ClientRetrieveSerializer(serializers.ModelSerializer):
     client_user = serializers.StringRelatedField()
     rating = serializers.SerializerMethodField()
     comments_rates = serializers.SerializerMethodField()
