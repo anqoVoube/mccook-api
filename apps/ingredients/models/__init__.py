@@ -1,0 +1,1 @@
+from apps.ingredients.models.ingredients import Ingredients
