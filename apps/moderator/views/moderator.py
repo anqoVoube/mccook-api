@@ -6,11 +6,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.http import Http404
 from django.db.models import Q
+from apps.moderator.permissions import ModeratorPermission
 
 class RecipeModeratorRetrieveView(APIView):
     def get_object(self, pk):
         try:
             recipes = Recipe.objects.get(pk = pk)
+            self.check_object_permissions(self.request, recipes)
         except:
             raise Http404
         return recipes
@@ -73,5 +75,6 @@ without changes"
 
 
 class RecipeModeratorListView(ListAPIView):
+    permission_classes = [ModeratorPermission]
     serializer_class = RecipeUpdateSerializer
     queryset = Recipe.objects.filter(confirmed="S")
