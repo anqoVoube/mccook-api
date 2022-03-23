@@ -282,7 +282,58 @@ class RecipeSearchTest(TestCase):
         self.apiclient.force_authenticate(user=self.user)
         self.search_by_name = "somename2"
         self.recipe_list = reverse('recipe-list')
-        self.recipe_search_url = self.recipe_list + f"?search={self.search_by_name}"
+        self.recipe_search_url = self.recipe_list + f"?search\
+={self.search_by_name}"
     def test_search_recipe(self):
         response = self.apiclient.get(self.recipe_search_url)
         self.assertEqual(response.status_code, 200)
+
+class FavoriteRecipeAddTest(TestCase):
+    def setUp(self):
+        #Ingredients
+        self.potato_ing = Ingredients.objects.create(ingredient_name="Potato")
+        self.tomato_ing = Ingredients.objects.create(ingredient_name="Tomato")
+        
+        # User
+        self.password = 'SomePassword123'
+        self.user = User(first_name="Jamoliddin",
+                         last_name="Bakhriddinov",
+                         username="anqov",
+                         email="alex.person7@mail.ru")
+        self.user.set_password(self.password)
+        self.user.save()
+
+        # Client
+        self.client = Client.objects.get(client_user=self.user)
+        
+        # Recipe
+        self.first_recipe = Recipe.objects.create(name="somename",
+                              description="a b c d e f g h j k l q",
+                              by_cook=self.client,
+                              confirmed="A")
+
+        self.first_recipe.ingredients.add(self.potato_ing, self.tomato_ing)
+
+        self.first_step = RecipeSteps.objects.create(
+            recipe=self.first_recipe,
+            step_number=1,
+            description="A b d e r t y q w e233e 2 23e23 qds")
+        self.second_step = RecipeSteps.objects.create(
+            recipe=self.first_recipe,
+            step_number=2,
+            description="A b d e r t y q we3 w w e 2")
+        
+        # ID OF RECIPE
+        self.first_recipe_id = self.first_recipe.recipe_id
+
+        # URLS
+        self.url_favorite_add = reverse('favorite-recipe',
+                                    kwargs={'pk': self.first_recipe_id})
+        
+        self.apiclient = APIClient()
+        self.apiclient.force_authenticate(user=self.user)
+
+    def test_add_to_favorite_list(self):
+        response = self.apiclient.get(self.url_favorite_add)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.favorite_recipes.all().count(), 1)

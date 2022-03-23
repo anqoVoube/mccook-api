@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView
 from django.http import Http404
 from rest_framework import filters
-
+from apps.client.models.client import Client
 
 class RecipeCreateView(APIView):
     def post(self, request):
@@ -36,6 +36,14 @@ class RecipeRetrieveView(APIView):
         object = self.get_object(pk)
         serializer = RecipeRetrieveSerializer(object, context={'request': request})
         return Response(serializer.data)
+
+class RecipeFavoriteAddView(APIView):
+    def get(self, request, pk, format=None):
+        client = Client.objects.get(client_user=request.user)
+        recipe = Recipe.objects.get(pk=pk)
+        client.favorite_recipes.add(recipe)
+        message = "Thank you! The recipe was added successfully"
+        return Response({"success": [message]})
 
 # from apps.recipe.models.recipe import Recipe
 # from apps.recipe.serializers.recipe import RecipeSerializer
