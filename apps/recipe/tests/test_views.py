@@ -171,11 +171,11 @@ class RecipeListRetrieveViewTest(TestCase):
                                     kwargs={'pk': self.first_recipe_id})
         
         # Comments
-        CommentRate.objects.create(by_client=self.client,
+        self.comment = CommentRate.objects.create(by_client=self.client,
                                    text="Very good",
                                    rate=5,
                                    to_recipe=self.first_recipe)
-        
+        self.comment_id = self.comment.id
         # APIClient
         self.apiclient = APIClient()
         self.apiclient.force_authenticate(user=self.user)
@@ -193,10 +193,12 @@ class RecipeListRetrieveViewTest(TestCase):
         self.assertNotIn("step_of_recipe", (data_in_dict[0]).keys())
 
     def test_retrieve_recipe(self):
+        self.maxDiff = None
         response = self.apiclient.get(self.url_retrieve)
         self.assertEqual(response.status_code, 200)
         data_in_str = json.dumps(response.data)
         data_in_dict = json.loads(data_in_str)
+        delete_url = f"http://127.0.0.1:8000/delete-comment/{self.comment_id}/"
         self.assertEqual(data_in_dict, 
             {
                 "name": "somename",
@@ -212,12 +214,75 @@ class RecipeListRetrieveViewTest(TestCase):
                           "description": "A b d e r t y q we3 w w e 2"
                        },
                 ],
-                "comments_and_rates": [
-                    {
+                "by_current_user": {
                         "by_client": "anqov",
                         "text": "Very good",
-                        "rate": 5
-                    }
-                ]
+                        "rate": 5,
+                        "delete_url": delete_url
+                    },
+                "comments_and_rates": []
             }
         )
+
+class RecipeSearchTest(TestCase):
+
+    def setUp(self):
+        #Ingredients
+        self.potato_ing = Ingredients.objects.create(ingredient_name="Potato")
+        self.tomato_ing = Ingredients.objects.create(ingredient_name="Tomato")
+        
+        # User
+        self.password = 'SomePassword123'
+        self.user = User(first_name="Jamoliddin",
+                         last_name="Bakhriddinov",
+                         username="anqov",
+                         email="alex.person7@mail.ru")
+        self.user.set_password(self.password)
+        self.user.save()
+
+        # Client
+        self.client = Client.objects.get(client_user=self.user)
+        
+        # Recipe
+        self.first_recipe = Recipe.objects.create(name="somename",
+                              description="a b c d e f g h j k l q",
+                              by_cook=self.client,
+                              confirmed="A")
+        self.second_recipe = Recipe.objects.create(name="somename2",
+                              description="a b c d e f g h j k l q2",
+                              by_cook=self.client,
+                              confirmed="A")
+        
+        self.first_recipe.ingredients.add(self.potato_ing, self.tomato_ing)
+        self.second_recipe.ingredients.add(self.tomato_ing)
+
+        self.first_step = RecipeSteps.objects.create(
+            recipe=self.first_recipe,
+            step_number=1,
+            description="A b d e r t y q w e233e 2 23e23 qds")
+        self.second_step = RecipeSteps.objects.create(
+            recipe=self.first_recipe,
+            step_number=2,
+            description="A b d e r t y q we3 w w e 2")
+
+        self.first_recipe_id = self.first_recipe.recipe_id
+        # URLS
+        self.url_list = reverse('recipe-list')
+        self.url_retrieve = reverse('recipe-retrieve',
+                                    kwargs={'pk': self.first_recipe_id})
+        
+        # Comments
+        self.comment = CommentRate.objects.create(by_client=self.client,
+                                   text="Very good",
+                                   rate=5,
+                                   to_recipe=self.first_recipe)
+        self.comment_id = self.comment.id
+        # APIClient
+        self.apiclient = APIClient()
+        self.apiclient.force_authenticate(user=self.user)
+        self.search_by_name = "somename2"
+        self.recipe_list = reverse('recipe-list')
+        self.recipe_search_url = self.recipe_list + f"?search={self.search_by_name}"
+    def test_search_recipe(self):
+        response = self.apiclient.get(self.recipe_search_url)
+        self.assertEqual(response.status_code, 200)

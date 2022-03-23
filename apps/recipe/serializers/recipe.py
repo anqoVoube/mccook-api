@@ -7,6 +7,7 @@ from apps.client.models.client import Client
 from apps.ingredients.models.ingredients import Ingredients
 from apps.commentrate.models.commentrate import CommentRate
 from apps.commentrate.serializers.commentrate import CommentrateSerializer
+from django.conf import settings
 
 
 class WordListingField(serializers.StringRelatedField):
@@ -123,9 +124,11 @@ class RecipeListSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ['name', 'description',
                   'ingredients']
-        
+
 
 class RecipeRetrieveSerializer(serializers.ModelSerializer):
+    current_client = {} # QuerySet -> Client-Model data of current user 
+    by_current_user = serializers.SerializerMethodField()
     comments_and_rates = serializers.SerializerMethodField()
     step_of_recipe = RecipeStepsSerializer(many=True,
                                            required=True)
@@ -133,9 +136,23 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ['name', 'description',
-                  'ingredients', 'step_of_recipe', 'comments_and_rates']
-    
+                  'ingredients', 'step_of_recipe',
+                  'by_current_user', 'comments_and_rates']
+
+    def get_by_current_user(self, obj):
+        self.current_client = Client.objects\
+            .get(client_user=self.context['request'].user)
+        
+        comments_of_client = CommentRate.objects\
+            .get(to_recipe=obj, by_client=self.current_client)
+        serialized_data = CommentrateSerializer(comments_of_client).data
+        url = f'/delete-comment/{comments_of_client.id}/'
+        serialized_data['delete_url'] = settings.DOMAIN + url
+        return serialized_data
+
     def get_comments_and_rates(self, obj):
-        comments_rates = CommentRate.objects.filter(to_recipe=obj)
+        comments_rates = CommentRate.objects\
+            .filter(to_recipe=obj)\
+                .exclude(by_client=self.current_client)
         serialized_data = CommentrateSerializer(comments_rates, many=True).data
         return serialized_data

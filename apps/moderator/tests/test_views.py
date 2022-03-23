@@ -174,4 +174,3 @@ class ModeratorViewTest(TestCase):
             self.assertEqual(1, 1) #passed
         else:
             self.assertEqual("Object was not deleted", "It wasn't removed")
-    

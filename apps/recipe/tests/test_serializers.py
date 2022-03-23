@@ -274,24 +274,24 @@ but delicious and tasty meal. Your mouth will be watering"
                         ]
                     )
 
-    def test_retrieve(self):
-        serializer = RecipeRetrieveSerializer(self.first_recipe)
-        self.assertEqual(serializer.data, 
-                    {
-                        "name": self.first_name,
-                        "description": self.first_description,
-                        "ingredients": ["Meat", "Onion"],
-                        "step_of_recipe": [
-                           {
-                               "step_number": 1,
-                               "description": "1 b c d e f g h j k l q e r t",
-                           },
-                           {
-                               "step_number": 2,
-                               "description": "2 b c d e f g h j k l q e r t",
-                           }
-                        ],
-                        "comments_and_rates": []
-                    }
-                )
+    # def test_retrieve(self):
+    #     serializer = RecipeRetrieveSerializer(self.first_recipe)
+    #     self.assertEqual(serializer.data, 
+    #                 {
+    #                     "name": self.first_name,
+    #                     "description": self.first_description,
+    #                     "ingredients": ["Meat", "Onion"],
+    #                     "step_of_recipe": [
+    #                        {
+    #                            "step_number": 1,
+    #                            "description": "1 b c d e f g h j k l q e r t",
+    #                        },
+    #                        {
+    #                            "step_number": 2,
+    #                            "description": "2 b c d e f g h j k l q e r t",
+    #                        }
+    #                     ],
+    #                     "comments_and_rates": []
+    #                 }
+    #             )
         

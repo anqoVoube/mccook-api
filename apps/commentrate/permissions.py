@@ -10,3 +10,8 @@ class RateRecipe(BasePermission):
 class RateClient(BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.client_user != request.user
+
+class DeleteComment(BasePermission):
+    def has_object_permission(self, request, obj, view):
+        client_user = Client.objects.get(client_user=request.user)
+        return obj.by_client == client_user

@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from django.http import Http404
+from rest_framework import filters
+
 
 class RecipeCreateView(APIView):
     def post(self, request):
@@ -15,8 +17,12 @@ class RecipeCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RecipeListView(ListAPIView):
-    queryset = Recipe.objects.filter(confirmed="A")
     serializer_class = RecipeListSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    def get_queryset(self):
+        return Recipe.objects.filter(confirmed="A")
+
 
 class RecipeRetrieveView(APIView):
     def get_object(self, pk):
@@ -28,7 +34,7 @@ class RecipeRetrieveView(APIView):
 
     def get(self, request, pk, format=None):
         object = self.get_object(pk)
-        serializer = RecipeRetrieveSerializer(object)
+        serializer = RecipeRetrieveSerializer(object, context={'request': request})
         return Response(serializer.data)
 
 # from apps.recipe.models.recipe import Recipe

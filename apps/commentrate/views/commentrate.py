@@ -39,3 +39,24 @@ class ClientCommentrateView(APIView):
             serializer.save()
             return Response({"success": "Rated and commented"})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteComment(APIView):
+    def get_object(self, pk):
+        try:
+            comment = CommentRate.objects.get(pk=pk)
+            self.check_object_permissions(self.request, comment)
+        except:
+            message = "You are not allowed to perform this action"
+            return Response({"forbidden": [message]},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        return comment
+
+    def delete(self, request, pk):
+        object = self.get_object(pk)
+        object.delete()
+        message = "Deleted successfully"
+        return Response({"success": [message]},
+                        status=status.HTTP_204_NO_CONTENT)
+
+        
