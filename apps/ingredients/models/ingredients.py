@@ -9,4 +9,4 @@ class Ingredients(models.Model):
 
     class Meta:
         verbose_name = 'ingredient'
-        verbose_name = 'ingredients'
+        verbose_name_plural = 'ingredients'

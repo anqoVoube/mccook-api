@@ -6,14 +6,11 @@ class Recipe(models.Model):
     DECLINE_DELETE = 'D'
     ON_STAGE = 'S'
     ACCEPT_ADD = 'A'
-
     ACCEPTION_OF_RECIPE = (
         (DECLINE_DELETE, 'Delete'),
         (ON_STAGE, 'On Stage Yet'),
         (ACCEPT_ADD, 'Add'),
     )
-
-    recipe_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50,
                             validators=[MinLengthValidator(2)])
 

@@ -3,17 +3,14 @@ from apps.recipe.models.recipe_steps import RecipeSteps
 from apps.recipe.serializers.recipe_steps import RecipeStepsSerializer
 from rest_framework import serializers 
 
-class RecipeUpdateSerializer(serializers.ModelSerializer):
-    # PREFETCH_FIELDS = ['ingredients']
-    # RELATED_FIELDS = ['by_cook']
 
-    step_of_recipe = RecipeStepsSerializer(many=True,
-                                           required=False)
-    # ingredients = serializers.StringRelatedField(many=True,
-    #                                              read_only=True)
+class RecipeUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ['recipe_id', 'name', 'description', 'step_of_recipe']
+
+    step_of_recipe = RecipeStepsSerializer(many=True,
+                                           required=False)
 
     def to_internal_value(self, data):
         errors = {}
@@ -34,7 +31,6 @@ class RecipeUpdateSerializer(serializers.ModelSerializer):
         elif isinstance(description, str) and len(description.split()) < 10:
             message = "description object must have at least 10 words"
             errors['min_word_description'] = [message]
-
         if steps is None:
             message = "steps object is not assigned"
             errors['not_assigned_steps'] = [message]
@@ -67,16 +63,13 @@ It should contain step_number and description"
         steps = validated_data.pop("step_of_recipe", instance.step_of_recipe)
         recipe_itself = super().update(instance, validated_data)
         recipe_steps = [RecipeSteps(
-            step_number = step['step_number'],
-            description = step['description'],
-            recipe = recipe_itself) for step in steps] # Preparing ready-list
+            step_number=step['step_number'],
+            description=step['description'],
+            recipe=recipe_itself) for step in steps] # Preparing ready-list
         # using list comprehensions for objects to bulk_create
 
         steps_length = len(recipe_steps)
         objects = RecipeSteps.objects.bulk_create(recipe_steps)
         recipesteps_ids = [objects[step].id for step in range(steps_length)]
-        RecipeSteps.objects\
-            .filter(recipe=recipe_itself)\
-                .exclude(id__in = recipesteps_ids)\
-                    .delete()
+        RecipeSteps.objects.filter(recipe=recipe_itself).exclude(id__in=recipesteps_ids).delete()
         return recipe_itself

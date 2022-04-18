@@ -6,7 +6,6 @@ class RecipeSteps(models.Model):
     step_number = models.SmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(50)]
         )
-
     description = models.CharField(max_length=200)
     recipe = models.ForeignKey('recipe.Recipe',
                                on_delete=models.CASCADE,
